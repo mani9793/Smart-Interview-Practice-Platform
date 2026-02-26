@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} – Smart Interview Practice{% endblock %}
+{% block content %}
+<div class="card card-sip shadow-sm p-4" style="max-width: 32rem;">
+    <h1 class="page-title h3 mb-4"><i class="bi bi-pencil-square text-primary me-2"></i>{{ title }}</h1>
+    <form method="post" action="">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="id_name" class="form-label fw-medium">Name</label>
+            {{ form.name }}
+            {% if form.name.errors %}<div class="form-text text-danger">{{ form.name.errors }}</div>{% endif %}
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-sip-primary">Save</button>
+            <a href="{% url 'practice:question_set_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

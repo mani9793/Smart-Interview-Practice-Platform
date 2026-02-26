@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Question {{ question_number }} – Practice{% endblock %}
+{% block content %}
+<div class="card card-sip shadow-sm p-4">
+    <p class="text-muted-sip small mb-3">
+        Question {{ question_number }} of {{ total_questions }} · <span class="badge {% if question.difficulty == 'easy' %}badge-easy{% elif question.difficulty == 'hard' %}badge-hard{% else %}badge-medium{% endif %} rounded-pill">{{ question.get_difficulty_display }}</span> · {{ session.question_set.name }}
+    </p>
+    <h2 class="h5 fw-semibold mb-3">Question</h2>
+    <div class="bg-sip-subtle rounded p-3 mb-4 text-break">{{ question.text|linebreaksbr }}</div>
+    {% if question.tags %}<p class="text-muted-sip small mb-3">Tags: {{ question.tags }}</p>{% endif %}
+    <form method="post" action="">
+        {% csrf_token %}
+        <div class="mb-4">
+            <label for="id_response_text" class="form-label fw-medium">Your answer</label>
+            {{ form.response_text }}
+            {% if form.response_text.errors %}<div class="form-text text-danger">{{ form.response_text.errors }}</div>{% endif %}
+        </div>
+        <button type="submit" class="btn btn-sip-primary">
+            <i class="bi bi-check-lg me-1"></i>Save &amp; Next
+        </button>
+    </form>
+</div>
+{% endblock %}

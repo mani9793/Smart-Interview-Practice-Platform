@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Login — Smart Interview Practice{% endblock %}
+
+{% block content %}
+<div class="auth-form-page">
+    <div class="card card-sip shadow-sm w-100 p-3 p-md-4 mx-2 mx-md-0" style="max-width: 32rem;">
+        <h1 class="page-title h3 mb-3 mb-md-4"><i class="bi bi-box-arrow-in-right me-2" style="color: var(--sip-primary);"></i>Log in</h1>
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label fw-medium">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <div class="form-text text-muted-sip small">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div class="form-text text-danger small">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="d-flex flex-column flex-sm-row gap-2">
+                <button type="submit" class="btn btn-sip-primary order-2 order-sm-1">Login</button>
+                <a href="{% url 'home' %}" class="btn btn-outline-secondary order-1 order-sm-2">Cancel</a>
+            </div>
+        </form>
+        <p class="text-muted-sip small mt-3 mb-0">Don't have an account? <a href="{% url 'register' %}">Register</a>.</p>
+    </div>
+</div>
+{% endblock %}

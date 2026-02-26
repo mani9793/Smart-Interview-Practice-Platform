@@ -22,8 +22,9 @@
             --sip-text: #333;
             --sip-muted: #666;
             --sip-border: #ddd;
+            --sip-subtle: #eef2f5;
         }
-        /* Django admin-style dark theme – nav is lighter than page background so it’s clearly visible */
+        /* Django admin-style dark theme – nav is lighter than page background so it's clearly visible */
         [data-theme="dark"] {
             --sip-nav: #39d0b0;
             --sip-nav-hover: #56e0c4;
@@ -34,9 +35,10 @@
             --sip-text: #e6edf3;
             --sip-muted: #8b949e;
             --sip-border: #30363d;
+            --sip-subtle: #161b22;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: var(--sip-bg);
             color: var(--sip-text);
             min-height: 100vh;
@@ -93,6 +95,37 @@
         }
         .page-title { font-weight: 600; color: var(--sip-text); margin-bottom: 0.5rem; }
         .text-muted-sip { color: var(--sip-muted); }
+        .text-primary { color: var(--sip-primary) !important; }
+        .text-sip { color: var(--sip-text); }
+        main a:not(.nav-link):not(.btn) { color: var(--sip-primary); }
+        main a:not(.nav-link):not(.btn):hover { color: var(--sip-primary-hover); }
+        .list-item-sip {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--sip-border);
+            background: var(--sip-card);
+            color: var(--sip-text);
+        }
+        .list-item-sip:last-child { border-bottom: none; }
+        .bg-sip-subtle {
+            background-color: var(--sip-subtle);
+            color: var(--sip-text);
+            border: 1px solid var(--sip-border);
+        }
+        .list-group-item {
+            background: var(--sip-card);
+            border-color: var(--sip-border);
+            color: var(--sip-text);
+        }
+        .btn-outline-primary { color: var(--sip-primary); border-color: var(--sip-primary); }
+        .btn-outline-primary:hover { background: var(--sip-primary); border-color: var(--sip-primary); color: #fff; }
+        .btn-outline-danger { color: var(--sip-muted); border-color: var(--sip-border); }
+        .btn-outline-danger:hover { color: #fff; }
+        .badge-easy { background: #d4edda; color: #155724; }
+        .badge-medium { background: #fff3cd; color: #856404; }
+        .badge-hard { background: #f8d7da; color: #721c24; }
+        [data-theme="dark"] .badge-easy { background: #238636; color: #7ee787; }
+        [data-theme="dark"] .badge-medium { background: #9e6a03; color: #f0c954; }
+        [data-theme="dark"] .badge-hard { background: #da3633; color: #ff7b72; }
         .form-control, .form-select {
             border-radius: 4px;
             border-color: var(--sip-border);
@@ -137,6 +170,7 @@
             .auth-form-page { min-height: min(75vh, calc(100vh - 140px)); padding: 2rem 0; }
         }
     </style>
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark navbar-sip">
@@ -151,6 +185,15 @@
                         <a class="nav-link" href="{% url 'home' %}">Home</a>
                     </li>
                     {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'practice:practice_index' %}"><i class="bi bi-play-circle me-1"></i>Practice</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'practice:question_set_list' %}"><i class="bi bi-collection me-1"></i>Question Sets</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'practice:history' %}"><i class="bi bi-clock-history me-1"></i>History</a>
+                        </li>
                         <li class="nav-item">
                             <span class="nav-link">Hello, {{ user.username }}</span>
                         </li>
@@ -225,5 +268,6 @@
             if (btn) btn.addEventListener('click', nextTheme);
         })();
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

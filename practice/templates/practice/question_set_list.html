@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Question Sets – Smart Interview Practice{% endblock %}
+{% block content %}
+<div class="card card-sip shadow-sm p-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h1 class="page-title h3 mb-1"><i class="bi bi-collection text-primary me-2"></i>Question Sets</h1>
+            <p class="text-muted-sip small mb-0">Create and manage your question sets.</p>
+        </div>
+        <a href="{% url 'practice:question_set_create' %}" class="btn btn-sip-primary">
+            <i class="bi bi-plus-lg me-1"></i>Create question set
+        </a>
+    </div>
+    {% if question_sets %}
+        <div class="list-group list-group-flush">
+            {% for qs in question_sets %}
+                <div class="list-group-item list-item-sip d-flex justify-content-between align-items-center flex-wrap gap-2 px-0">
+                    <a href="{% url 'practice:question_list' qs.pk %}" class="fw-medium text-decoration-none text-sip">{{ qs.name }}</a>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'practice:question_list' qs.pk %}" class="btn btn-outline-primary">
+                            <i class="bi bi-list-ul me-1"></i>Questions
+                        </a>
+                        {% if qs.pk in editable_set_ids %}
+                            <a href="{% url 'practice:question_set_edit' qs.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                            <a href="{% url 'practice:question_set_delete' qs.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i></a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-4 text-muted-sip">
+            <i class="bi bi-collection display-6 d-block mb-2"></i>
+            <p class="mb-2">No question sets yet.</p>
+            <a href="{% url 'practice:question_set_create' %}" class="btn btn-sip-primary">Create your first set</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

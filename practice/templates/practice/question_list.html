@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}{{ question_set.name }} – Questions{% endblock %}
+{% block content %}
+<div class="card card-sip shadow-sm p-4">
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="{% url 'practice:question_set_list' %}" class="text-decoration-none">Question sets</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ question_set.name }}</li>
+        </ol>
+    </nav>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <h1 class="page-title h3 mb-0">{{ question_set.name }}</h1>
+        {% if can_edit %}
+            <a href="{% url 'practice:question_create' question_set.pk %}" class="btn btn-sip-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Add question
+            </a>
+        {% endif %}
+    </div>
+    {% if questions %}
+        <div class="list-group list-group-flush">
+            {% for q in questions %}
+                <div class="list-group-item list-item-sip px-0">
+                    <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                        <div class="flex-grow-1 min-w-0">
+                            <span class="badge bg-secondary rounded-pill me-2">#{{ q.order }}</span>
+                            <span class="badge {% if q.difficulty == 'easy' %}badge-easy{% elif q.difficulty == 'hard' %}badge-hard{% else %}badge-medium{% endif %} rounded-pill me-2">{{ q.get_difficulty_display }}</span>
+                            {% if q.tags %}<span class="text-muted-sip small">{{ q.tags }}</span>{% endif %}
+                            <p class="mt-2 mb-0 text-break">{{ q.text|truncatewords:35 }}</p>
+                        </div>
+                        {% if can_edit %}
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'practice:question_edit' question_set.pk q.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                                <a href="{% url 'practice:question_delete' question_set.pk q.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i></a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-4 text-muted-sip">
+            <i class="bi bi-question-circle display-6 d-block mb-2"></i>
+            <p class="mb-2">No questions yet.</p>
+            {% if can_edit %}
+                <a href="{% url 'practice:question_create' question_set.pk %}" class="btn btn-sip-primary">Add first question</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

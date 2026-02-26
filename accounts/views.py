@@ -1,6 +1,5 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.contrib.auth import login
-from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import CreateView
 
@@ -27,20 +26,3 @@ class CustomLoginView(LoginView):
 
 class CustomLogoutView(LogoutView):
     next_page = '/'
-    http_method_names = ['get', 'post', 'options']  # Allow GET so main's link works (Django 5+ defaults to POST only)
-
-
-# Placeholders until your friend merges Practice & History. Replace these with their views.
-@login_required
-def practice_placeholder(request):
-    return render(request, 'practice_placeholder.html')
-
-
-@login_required
-def history_placeholder(request):
-    return render(request, 'history_placeholder.html')
-
-
-@login_required
-def question_sets_placeholder(request):
-    return render(request, 'question_sets_placeholder.html')

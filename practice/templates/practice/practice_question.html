@@ -12,7 +12,7 @@
         {% csrf_token %}
         <div class="mb-4">
             <label for="id_response_text" class="form-label fw-medium">Your answer</label>
-            {{ form.response_text }}
+            <textarea name="response_text" id="id_response_text" rows="8" class="form-control" placeholder="Type your answer here...">{% if form.response_text.value %}{{ form.response_text.value }}{% endif %}</textarea>
             {% if form.response_text.errors %}<div class="form-text text-danger">{{ form.response_text.errors }}</div>{% endif %}
         </div>
         <button type="submit" class="btn btn-sip-primary">

@@ -38,24 +38,57 @@ def practice_start(request, set_id):
 
 @login_required
 def practice_session(request, session_id):
-    """Show current question or session complete; save response on POST."""
+    """Show current question or session complete; save response on POST. In review mode (?review=1), always show read-only summary."""
     session = get_object_or_404(PracticeSession, pk=session_id, user=request.user)
     questions = list(session.questions_in_order())
     next_idx = session.next_question_index()
 
+    # Review mode (from History): show read-only summary only, no Save & Next
+    if request.GET.get('review'):
+        responses_by_question = {
+            pr.question_id: (pr.response_text or '')
+            for pr in session.responses.all()
+        }
+        responses_display = []
+        for question in session.questions_in_order():
+            responses_display.append({
+                'question': question,
+                'answer_text': responses_by_question.get(question.pk, ''),
+            })
+        return render(request, 'practice/practice_complete.html', {
+            'session': session,
+            'responses': responses_display,
+        })
+
     if next_idx is None:
-        return render(request, 'practice/practice_complete.html', {'session': session})
+        # Build (question, answer_text) list in question order; load all responses in one query
+        responses_by_question = {
+            pr.question_id: (pr.response_text or '')
+            for pr in session.responses.all()
+        }
+        responses_display = []
+        for question in session.questions_in_order():
+            responses_display.append({
+                'question': question,
+                'answer_text': responses_by_question.get(question.pk, ''),
+            })
+        return render(request, 'practice/practice_complete.html', {
+            'session': session,
+            'responses': responses_display,
+        })
 
     question = questions[next_idx]
     if request.method == 'POST':
+        answer = (request.POST.get('response_text') or '').strip()
         form = PracticeResponseForm(request.POST)
-        if form.is_valid():
-            PracticeResponse.objects.update_or_create(
-                session=session,
-                question=question,
-                defaults={'response_text': form.cleaned_data['response_text']},
-            )
-            return redirect('practice:practice_session', session_id=session_id)
+        if not answer and form.is_valid():
+            answer = (form.cleaned_data.get('response_text') or '').strip()
+        PracticeResponse.objects.update_or_create(
+            session=session,
+            question=question,
+            defaults={'response_text': answer},
+        )
+        return redirect('practice:practice_session', session_id=session_id)
     else:
         form = PracticeResponseForm(initial={'response_text': ''})
 

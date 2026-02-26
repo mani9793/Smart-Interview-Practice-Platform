@@ -9,7 +9,7 @@
     <h1 class="page-title display-5">Smart Interview Practice Platform</h1>
     <p class="lead text-muted-sip">Practice interview questions, track progress, and improve with analytics.</p>
     {% if user.is_authenticated %}
-        <p class="mt-3 text-muted-sip">You are logged in. Use the nav to practice, manage question sets, or view history.</p>
+        <p class="mt-3 text-muted-sip">You are logged in.</p>
     {% else %}
         <p class="mt-3">
             <a href="{% url 'register' %}" class="btn btn-sip-primary btn-lg me-2">Register</a>

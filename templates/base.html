@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        (function(){var t=localStorage.getItem('sip-theme');if(t)document.documentElement.setAttribute('data-theme',t);})();
+    </script>
+    <title>{% block title %}Smart Interview Practice{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Django admin-style light theme (default) */
+        :root, [data-theme="light"] {
+            --sip-nav: #417690;
+            --sip-nav-hover: #205067;
+            --sip-primary: #417690;
+            --sip-primary-hover: #205067;
+            --sip-bg: #f8f8f8;
+            --sip-card: #ffffff;
+            --sip-text: #333;
+            --sip-muted: #666;
+            --sip-border: #ddd;
+        }
+        /* Django admin-style dark theme – nav is lighter than page background so it’s clearly visible */
+        [data-theme="dark"] {
+            --sip-nav: #39d0b0;
+            --sip-nav-hover: #56e0c4;
+            --sip-primary: #39d0b0;
+            --sip-primary-hover: #56e0c4;
+            --sip-bg: #161b22;
+            --sip-card: #21262d;
+            --sip-text: #e6edf3;
+            --sip-muted: #8b949e;
+            --sip-border: #30363d;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--sip-bg);
+            color: var(--sip-text);
+            min-height: 100vh;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .navbar-sip {
+            background: var(--sip-nav) !important;
+            padding: 0.75rem 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        .navbar-sip .navbar-brand { font-weight: 600; font-size: 1.15rem; color: #fff !important; }
+        .navbar-sip .nav-link {
+            color: #ffc !important;
+            font-weight: 500;
+            padding: 0.5rem 0.75rem !important;
+            border-radius: 0.25rem;
+        }
+        .navbar-sip .nav-link:hover {
+            color: #fff !important;
+            background: var(--sip-nav-hover);
+        }
+        [data-theme="dark"] .navbar-sip .nav-link { color: #fff !important; }
+        [data-theme="dark"] .navbar-sip .nav-link:hover { background: var(--sip-nav-hover); color: #fff !important; }
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            color: #ffc;
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        .theme-toggle:hover { color: #fff; background: var(--sip-nav-hover); }
+        [data-theme="dark"] .theme-toggle { color: #fff; }
+        [data-theme="dark"] .theme-toggle:hover { color: #fff; }
+        .btn-sip-primary {
+            background: var(--sip-primary);
+            border-color: var(--sip-primary);
+            color: #fff;
+            font-weight: 500;
+        }
+        .btn-sip-primary:hover {
+            background: var(--sip-primary-hover);
+            border-color: var(--sip-primary-hover);
+            color: #fff;
+        }
+        .card-sip {
+            background: var(--sip-card);
+            border: 1px solid var(--sip-border);
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .page-title { font-weight: 600; color: var(--sip-text); margin-bottom: 0.5rem; }
+        .text-muted-sip { color: var(--sip-muted); }
+        .form-control, .form-select {
+            border-radius: 4px;
+            border-color: var(--sip-border);
+            background: var(--sip-card);
+            color: var(--sip-text);
+            transition: border-color 0.2s ease, background-color 0.2s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--sip-primary);
+            box-shadow: 0 0 0 2px rgba(65, 118, 144, 0.25);
+            background: var(--sip-card);
+            color: var(--sip-text);
+        }
+        [data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus {
+            box-shadow: 0 0 0 2px rgba(57, 208, 176, 0.35);
+        }
+        .form-control::placeholder { color: var(--sip-muted); }
+        [data-theme="dark"] .form-control, [data-theme="dark"] .form-select { color: #fff !important; }
+        [data-theme="dark"] .form-control:focus, [data-theme="dark"] .form-select:focus { color: #fff !important; }
+        [data-theme="dark"] .form-label { color: #fff !important; }
+        [data-theme="dark"] .btn-outline-secondary {
+            border-color: var(--sip-border);
+            color: var(--sip-muted);
+        }
+        [data-theme="dark"] .btn-outline-secondary:hover {
+            background: var(--sip-border);
+            border-color: var(--sip-border);
+            color: var(--sip-text);
+        }
+        [data-theme="dark"] .alert { border: 1px solid var(--sip-border); }
+        [data-theme="dark"] main a:not(.nav-link):not(.btn) { color: var(--sip-primary); }
+        [data-theme="dark"] main a:not(.nav-link):not(.btn):hover { color: var(--sip-primary-hover); }
+        main { padding: 2rem 0 3rem; }
+        .auth-form-page {
+            min-height: min(70vh, calc(100vh - 120px));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem 0;
+        }
+        @media (min-width: 768px) {
+            .auth-form-page { min-height: min(75vh, calc(100vh - 140px)); padding: 2rem 0; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-sip">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}"><i class="bi bi-journal-check me-2"></i>Smart Interview Practice</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Home</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'practice' %}"><i class="bi bi-play-circle me-1"></i>Practice</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'question_sets' %}"><i class="bi bi-collection me-1"></i>Question Sets</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'history' %}"><i class="bi bi-clock-history me-1"></i>History</a>
+                        </li>
+                        <li class="nav-item">
+                            <span class="nav-link">Hello, {{ user.username }}</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'login' %}">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'register' %}">Register</a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+                            <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+    <script>
+        (function() {
+            var STORAGE_KEY = 'sip-theme';
+            var html = document.documentElement;
+            var btn = document.getElementById('themeToggle');
+            var icon = document.getElementById('themeIcon');
+            function getStored() { return localStorage.getItem(STORAGE_KEY); }
+            function setStored(val) { try { localStorage.setItem(STORAGE_KEY, val); } catch (e) {} }
+            function applyTheme(theme) {
+                html.setAttribute('data-theme', theme || 'light');
+                if (icon) {
+                    icon.classList.remove('bi-sun-fill', 'bi-moon-stars-fill');
+                    icon.classList.add(theme === 'dark' ? 'bi-sun-fill' : 'bi-moon-stars-fill');
+                }
+            }
+            function nextTheme() {
+                var current = html.getAttribute('data-theme') || 'light';
+                var next = current === 'dark' ? 'light' : 'dark';
+                applyTheme(next);
+                setStored(next);
+            }
+            var stored = getStored();
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (stored) {
+                applyTheme(stored);
+            } else if (prefersDark) {
+                applyTheme('dark');
+                setStored('dark');
+            } else {
+                applyTheme('light');
+            }
+            if (btn) btn.addEventListener('click', nextTheme);
+        })();
+    </script>
+</body>
+</html>

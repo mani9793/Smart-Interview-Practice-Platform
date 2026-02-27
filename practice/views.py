@@ -246,11 +246,31 @@ def question_set_delete(request, pk):
 # ---- Questions CRUD ----
 
 def question_list(request, set_id):
-    """List questions in a set."""
+    """List questions in a set. Optional filters: difficulty, search (keyword in question text)."""
     question_set = get_object_or_404(QuestionSet, pk=set_id)
     questions = question_set.questions.all()
+
+    difficulty = (request.GET.get('difficulty') or '').strip().lower()
+    if difficulty and difficulty in ('easy', 'medium', 'hard'):
+        questions = questions.filter(difficulty=difficulty)
+    else:
+        difficulty = ''
+
+    search_keyword = (request.GET.get('q') or '').strip()
+    if search_keyword:
+        questions = questions.filter(text__icontains=search_keyword)
+
     can_edit = _can_edit_set(request, question_set)
-    return render(request, 'practice/question_list.html', {'question_set': question_set, 'questions': questions, 'can_edit': can_edit})
+    has_active_filters = bool(difficulty or search_keyword)
+
+    return render(request, 'practice/question_list.html', {
+        'question_set': question_set,
+        'questions': questions,
+        'can_edit': can_edit,
+        'filter_difficulty': difficulty,
+        'filter_q': search_keyword,
+        'has_active_filters': has_active_filters,
+    })
 
 
 def question_create(request, set_id):

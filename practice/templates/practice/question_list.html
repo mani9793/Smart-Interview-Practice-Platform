@@ -16,6 +16,34 @@
             </a>
         {% endif %}
     </div>
+
+    <div class="mb-4 p-3 rounded bg-sip-subtle border border-sip-border">
+        <form method="get" action="{% url 'practice:question_list' question_set.pk %}" class="row g-2 align-items-end flex-wrap">
+            {% if filter_difficulty %}<input type="hidden" name="difficulty" value="{{ filter_difficulty }}">{% endif %}
+            <div class="col-auto">
+                <label class="form-label small text-muted-sip mb-0">Difficulty</label>
+                <div class="d-flex flex-wrap gap-1">
+                    <a href="{% url 'practice:question_list' question_set.pk %}{% if filter_q %}?q={{ filter_q|urlencode }}{% endif %}" class="btn btn-sm {% if not filter_difficulty %}btn-sip-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+                    <a href="?difficulty=easy{% if filter_q %}&q={{ filter_q|urlencode }}{% endif %}" class="btn btn-sm {% if filter_difficulty == 'easy' %}btn-sip-primary{% else %}btn-outline-secondary{% endif %}">Easy</a>
+                    <a href="?difficulty=medium{% if filter_q %}&q={{ filter_q|urlencode }}{% endif %}" class="btn btn-sm {% if filter_difficulty == 'medium' %}btn-sip-primary{% else %}btn-outline-secondary{% endif %}">Medium</a>
+                    <a href="?difficulty=hard{% if filter_q %}&q={{ filter_q|urlencode }}{% endif %}" class="btn btn-sm {% if filter_difficulty == 'hard' %}btn-sip-primary{% else %}btn-outline-secondary{% endif %}">Hard</a>
+                </div>
+            </div>
+            <div class="col-auto flex-grow-1 min-width-120">
+                <label for="filterQ" class="form-label small text-muted-sip mb-0">Search</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" name="q" id="filterQ" value="{{ filter_q }}" class="form-control form-control-sm" placeholder="Search in question text...">
+                    <button type="submit" class="btn btn-sip-primary btn-sm"><i class="bi bi-search"></i> Search</button>
+                </div>
+            </div>
+            {% if has_active_filters %}
+            <div class="col-auto">
+                <a href="{% url 'practice:question_list' question_set.pk %}" class="btn btn-sm btn-outline-secondary">Clear filters</a>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+
     {% if questions %}
         <div class="list-group list-group-flush">
             {% for q in questions %}
@@ -40,9 +68,14 @@
     {% else %}
         <div class="text-center py-4 text-muted-sip">
             <i class="bi bi-question-circle display-6 d-block mb-2"></i>
-            <p class="mb-2">No questions yet.</p>
-            {% if can_edit %}
-                <a href="{% url 'practice:question_create' question_set.pk %}" class="btn btn-sip-primary">Add first question</a>
+            {% if has_active_filters %}
+                <p class="mb-2">No questions match the current filters.</p>
+                <a href="{% url 'practice:question_list' question_set.pk %}" class="btn btn-sip-primary">Clear filters</a>
+            {% else %}
+                <p class="mb-2">No questions yet.</p>
+                {% if can_edit %}
+                    <a href="{% url 'practice:question_create' question_set.pk %}" class="btn btn-sip-primary">Add first question</a>
+                {% endif %}
             {% endif %}
         </div>
     {% endif %}

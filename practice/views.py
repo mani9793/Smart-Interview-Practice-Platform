@@ -49,14 +49,16 @@ def practice_session(request, session_id):
     # Review mode (from History): show read-only summary only, no Save & Next
     if request.GET.get('review'):
         responses_by_question = {
-            pr.question_id: (pr.response_text or '')
+            pr.question_id: {'answer_text': pr.response_text or '', 'self_rating': pr.self_rating}
             for pr in session.responses.all()
         }
         responses_display = []
         for question in session.questions_in_order():
+            data = responses_by_question.get(question.pk, {'answer_text': '', 'self_rating': None})
             responses_display.append({
                 'question': question,
-                'answer_text': responses_by_question.get(question.pk, ''),
+                'answer_text': data['answer_text'],
+                'self_rating': data['self_rating'],
             })
         return render(request, 'practice/practice_complete.html', {
             'session': session,
@@ -64,16 +66,18 @@ def practice_session(request, session_id):
         })
 
     if next_idx is None:
-        # Build (question, answer_text) list in question order; load all responses in one query
+        # Build (question, answer_text, self_rating) list in question order; load all responses in one query
         responses_by_question = {
-            pr.question_id: (pr.response_text or '')
+            pr.question_id: {'answer_text': pr.response_text or '', 'self_rating': pr.self_rating}
             for pr in session.responses.all()
         }
         responses_display = []
         for question in session.questions_in_order():
+            data = responses_by_question.get(question.pk, {'answer_text': '', 'self_rating': None})
             responses_display.append({
                 'question': question,
-                'answer_text': responses_by_question.get(question.pk, ''),
+                'answer_text': data['answer_text'],
+                'self_rating': data['self_rating'],
             })
         return render(request, 'practice/practice_complete.html', {
             'session': session,
@@ -86,10 +90,17 @@ def practice_session(request, session_id):
         form = PracticeResponseForm(request.POST)
         if not answer and form.is_valid():
             answer = (form.cleaned_data.get('response_text') or '').strip()
+        self_rating = request.POST.get('self_rating')
+        if self_rating and self_rating.isdigit():
+            r = int(self_rating)
+            self_rating = r if 1 <= r <= 5 else None
+        else:
+            self_rating = None
+        defaults = {'response_text': answer, 'self_rating': self_rating}
         PracticeResponse.objects.update_or_create(
             session=session,
             question=question,
-            defaults={'response_text': answer},
+            defaults=defaults,
         )
         return redirect('practice:practice_session', session_id=session_id)
     else:

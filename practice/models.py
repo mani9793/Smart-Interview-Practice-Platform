@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.conf import settings
 
@@ -96,6 +97,12 @@ class PracticeResponse(models.Model):
         related_name='practice_responses',
     )
     response_text = models.TextField(blank=True)
+    self_rating = models.IntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+        help_text='Self-rating 1–5',
+    )
     saved_at = models.DateTimeField(auto_now=True)
 
     class Meta:

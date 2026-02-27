@@ -9,8 +9,9 @@
             {% for s in sessions %}
                 <div class="list-group-item list-item-sip d-flex justify-content-between align-items-center px-0">
                     <div>
-                        <span class="fw-medium">{{ s.question_set.name }}</span>
+                        <span class="fw-medium text-sip">{{ s.question_set.name }}</span>
                         <span class="text-muted-sip small ms-2">{{ s.started_at|date:"M j, Y H:i" }}</span>
+                        {% if s.ended_at %}<span class="text-muted-sip small ms-1">· {{ s.duration_display }}</span>{% endif %}
                     </div>
                     <a href="{% url 'practice:practice_session' s.pk %}?review=1" class="btn btn-sip-primary btn-sm">
                         <i class="bi bi-eye me-1"></i>View

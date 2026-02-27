@@ -2,16 +2,16 @@
 {% block title %}Practice – Smart Interview Practice{% endblock %}
 {% block content %}
 <div class="card card-sip shadow-sm p-4">
-    <h1 class="page-title h3"><i class="bi bi-play-circle text-primary me-2"></i>Practice</h1>
-    <p class="text-muted-sip mb-4">Choose a question set to start a practice session.</p>
+    <h1 class="page-title h3 text-sip"><i class="bi bi-play-circle text-primary me-2"></i>Practice</h1>
+    <p class="text-muted-sip mb-4">Choose a question set to start a practice session. You can use a timer (pause or end anytime) or practice without one.</p>
     {% if question_sets %}
         <div class="list-group list-group-flush">
             {% for qs in question_sets %}
                 <div class="list-group-item list-item-sip d-flex justify-content-between align-items-center px-0">
-                    <span class="fw-medium">{{ qs.name }}</span>
-                    <a href="{% url 'practice:practice_start' qs.pk %}" class="btn btn-sip-primary btn-sm">
+                    <span class="fw-medium text-sip">{{ qs.name }}</span>
+                    <button type="button" class="btn btn-sip-primary btn-sm btn-start-session" data-start-url="{% url 'practice:practice_start' qs.pk %}" data-set-name="{{ qs.name|escape }}">
                         <i class="bi bi-play-fill me-1"></i>Start
-                    </a>
+                    </button>
                 </div>
             {% endfor %}
         </div>
@@ -19,4 +19,50 @@
         <p class="text-muted-sip mb-0">No question sets available yet. <a href="{% url 'practice:question_set_list' %}" class="text-decoration-none fw-medium">Create one</a>.</p>
     {% endif %}
 </div>
+
+<!-- Timer choice modal -->
+<div class="modal fade" id="startSessionModal" tabindex="-1" aria-labelledby="startSessionModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content card-sip" style="border: 1px solid var(--sip-border);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title text-sip" id="startSessionModalLabel"><i class="bi bi-stopwatch me-2"></i>Start practice session</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-2">
+                <p class="text-sip mb-3">Do you want to use a <strong>timer</strong> for this session? You can pause or end it anytime. Total time will be shown when you finish.</p>
+                <p class="text-muted-sip small mb-0" id="startSessionSetName"></p>
+            </div>
+            <div class="modal-footer border-0 pt-0 gap-2">
+                <a href="#" id="startWithTimer" class="btn btn-sip-primary"><i class="bi bi-stopwatch me-1"></i>Start with timer</a>
+                <a href="#" id="startWithoutTimer" class="btn btn-outline-secondary">Start without timer</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var modalEl = document.getElementById('startSessionModal');
+    var startWithTimer = document.getElementById('startWithTimer');
+    var startWithoutTimer = document.getElementById('startWithoutTimer');
+    var setNameEl = document.getElementById('startSessionSetName');
+    if (!modalEl || !startWithTimer || !startWithoutTimer) return;
+
+    var modal = new bootstrap.Modal(modalEl);
+    document.querySelectorAll('.btn-start-session').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var url = btn.getAttribute('data-start-url');
+            var name = btn.getAttribute('data-set-name') || '';
+            if (url) {
+                startWithTimer.href = url.indexOf('?') !== -1 ? url + '&timer=1' : url + '?timer=1';
+                startWithoutTimer.href = url.indexOf('?') !== -1 ? url + '&timer=0' : url + '?timer=0';
+                setNameEl.textContent = name ? 'Set: ' + name : '';
+                modal.show();
+            }
+        });
+    });
+})();
+</script>
 {% endblock %}

@@ -35,9 +35,17 @@ class RegisterForm(UserCreationForm):
 
 
 class PracticeResponseForm(forms.ModelForm):
+    self_rating = forms.TypedChoiceField(
+        required=False,
+        coerce=lambda x: int(x) if x else None,
+        empty_value=None,
+        choices=[('', '-- Rate your answer (optional) --')] + [(i, str(i)) for i in range(1, 6)],
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
     class Meta:
         model = PracticeResponse
-        fields = ['response_text']
+        fields = ['response_text', 'self_rating']
         widgets = {
             'response_text': forms.Textarea(attrs={
                 'rows': 8,

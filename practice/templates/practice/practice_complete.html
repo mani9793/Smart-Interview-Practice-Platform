@@ -9,24 +9,28 @@
     </div>
 
     {% if responses %}
-        <h2 class="h5 fw-semibold mb-3 mt-4"><i class="bi bi-chat-left-text me-2"></i>Your answers</h2>
+        <h2 class="h5 fw-semibold mb-3 mt-4 text-sip"><i class="bi bi-chat-left-text me-2"></i>Your answers</h2>
         <div class="list-group list-group-flush">
             {% for response in responses %}
-                <div class="list-group-item list-item-sip px-0 pb-4">
-                    <p class="text-muted-sip small mb-1">
+                <div class="list-group-item list-item-sip px-0 pb-4 mb-3 rounded">
+                    <p class="text-muted-sip small mb-2">
                         <span class="badge bg-secondary rounded-pill me-2">#{{ forloop.counter }}</span>
                         <span class="badge {% if response.question.difficulty == 'easy' %}badge-easy{% elif response.question.difficulty == 'hard' %}badge-hard{% else %}badge-medium{% endif %} rounded-pill">{{ response.question.get_difficulty_display }}</span>
                     </p>
-                    <p class="fw-semibold mb-2">Question</p>
-                    <div class="bg-sip-subtle rounded p-3 mb-3 text-break">{{ response.question.text|linebreaksbr }}</div>
-                    <p class="fw-semibold mb-2">Your answer</p>
-                    <div class="bg-sip-subtle rounded p-3 text-break">
+                    <p class="text-uppercase text-muted-sip small fw-semibold mb-1" style="letter-spacing: 0.04em;">Question</p>
+                    <div class="session-q-block rounded p-3 mb-3 text-break fw-bold">{{ response.question.text|linebreaksbr }}</div>
+                    <p class="text-uppercase text-muted-sip small fw-semibold mb-1 mt-3" style="letter-spacing: 0.04em;">Answer</p>
+                    <div class="session-a-block rounded p-3 text-break">
                         {% if response.answer_text %}
                             {{ response.answer_text|linebreaksbr }}
                         {% else %}
-                            <span class="text-muted-sip">No answer saved.</span>
+                            <span class="text-muted-sip fst-italic">No answer saved.</span>
                         {% endif %}
                     </div>
+                    {% if response.self_rating %}
+                    <p class="text-uppercase text-muted-sip small fw-semibold mb-1 mt-3" style="letter-spacing: 0.04em;">Self-rating</p>
+                    <p class="mb-0" style="font-size: 1.25rem;">{% for i in "12345" %}{% if forloop.counter <= response.self_rating %}<span style="color: #e6b800;">★</span>{% else %}<span class="text-muted-sip">☆</span>{% endif %}{% endfor %}</p>
+                    {% endif %}
                 </div>
             {% endfor %}
         </div>
@@ -41,4 +45,23 @@
         </a>
     </div>
 </div>
+{% block extra_css %}
+<style>
+.session-q-block {
+    background: var(--sip-subtle);
+    border: 1px solid var(--sip-border);
+    border-left: 3px solid var(--sip-primary);
+    font-size: 1.05rem;
+    line-height: 1.5;
+    color: var(--sip-text);
+}
+.session-a-block {
+    background: var(--sip-subtle);
+    border: 1px solid var(--sip-border);
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--sip-text);
+}
+</style>
+{% endblock %}
 {% endblock %}

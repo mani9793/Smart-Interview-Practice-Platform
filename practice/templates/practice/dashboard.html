@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – Smart Interview Practice{% endblock %}
+{% block content %}
+<style>
+.chart-wrapper-vertical {
+    max-height: 360px;
+    overflow: auto;
+    border: 2px solid var(--sip-primary);
+    border-radius: 6px;
+    background: var(--sip-card);
+    box-shadow: 0 0 0 1px var(--sip-border), 0 2px 8px rgba(0,0,0,0.06);
+}
+[data-theme="dark"] .chart-wrapper-vertical {
+    box-shadow: 0 0 0 1px var(--sip-border), 0 2px 12px rgba(0,0,0,0.2);
+}
+.chart-inner-vertical {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    padding: 8px;
+    min-width: 300px;
+}
+</style>
+<div class="card card-sip shadow-sm p-4 mb-4">
+    <h1 class="page-title h3 mb-2"><i class="bi bi-graph-up text-primary me-2"></i>Progress Dashboard</h1>
+    <p class="text-muted-sip mb-4">Your practice activity by topic and recent sessions.</p>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card card-sip p-3 h-100">
+                <div class="d-flex align-items-center">
+                    <span class="display-6 text-primary me-3"><i class="bi bi-collection"></i></span>
+                    <div>
+                        <span class="text-muted-sip small d-block">Total sessions</span>
+                        <span class="fw-semibold fs-5">{{ total_sessions }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-sip p-3 h-100">
+                <div class="d-flex align-items-center">
+                    <span class="display-6 text-primary me-3"><i class="bi bi-chat-left-text"></i></span>
+                    <div>
+                        <span class="text-muted-sip small d-block">Total answers</span>
+                        <span class="fw-semibold fs-5">{{ total_responses }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if topic_stats %}
+    <h2 class="h5 fw-semibold mb-3 mt-4"><i class="bi bi-bar-chart-fill text-primary me-2"></i>Attempts by topic</h2>
+    <div class="chart-wrapper-vertical mb-4">
+        <div class="chart-inner-vertical" id="chartInnerVertical">
+            <canvas id="dashboardChartVertical" aria-label="Attempts by topic chart"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <h2 class="h5 fw-semibold mb-3">By topic</h2>
+    {% if topic_stats %}
+        <div class="table-responsive">
+            <table class="table table-borderless table-sip mb-0">
+                <thead>
+                    <tr class="text-muted-sip small">
+                        <th class="border-bottom border-sip">Topic</th>
+                        <th class="text-end border-bottom border-sip">Attempts</th>
+                        {% if has_rating %}<th class="text-end border-bottom border-sip">Avg score</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in topic_stats %}
+                        <tr>
+                            <td class="fw-medium">{{ row.question__question_set__name|default:"—" }}</td>
+                            <td class="text-end">{{ row.response_count }}</td>
+                            {% if has_rating %}
+                                <td class="text-end">
+                                    {% if row.avg_rating is not None %}
+                                        <span class="badge badge-dashboard-score rounded-pill">{{ row.avg_rating|floatformat:1 }}/5</span>
+                                    {% else %}
+                                        <span class="text-muted-sip small">No ratings yet</span>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if not has_rating %}
+            <p class="text-muted-sip small mt-2 mb-0">Self-rating (1–5) will appear here once it’s enabled.</p>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-4 text-muted-sip">
+            <i class="bi bi-pie-chart display-6 d-block mb-2"></i>
+            <p class="mb-2">No practice data yet.</p>
+            <a href="{% url 'practice:practice_index' %}" class="btn btn-sip-primary">Start practice</a>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card card-sip shadow-sm p-4">
+    <h2 class="h5 fw-semibold mb-3"><i class="bi bi-clock-history text-primary me-2"></i>Recent sessions</h2>
+    {% if recent_sessions %}
+        <div class="list-group list-group-flush">
+            {% for s in recent_sessions %}
+                <div class="list-group-item list-item-sip d-flex justify-content-between align-items-center px-0">
+                    <div>
+                        <span class="fw-medium">{{ s.question_set.name }}</span>
+                        <span class="text-muted-sip small ms-2">{{ s.started_at|date:"M j, Y H:i" }}</span>
+                    </div>
+                    <a href="{% url 'practice:practice_session' s.pk %}?review=1" class="btn btn-sip-primary btn-sm">
+                        <i class="bi bi-eye me-1"></i>Review
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="mt-3">
+            <a href="{% url 'practice:history' %}" class="btn btn-outline-primary btn-sm">View all history</a>
+        </div>
+    {% else %}
+        <div class="text-center py-4 text-muted-sip">
+            <i class="bi bi-clock-history display-6 d-block mb-2"></i>
+            <p class="mb-2">No sessions yet.</p>
+            <a href="{% url 'practice:practice_index' %}" class="btn btn-sip-primary">Start practice</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" crossorigin="anonymous"></script>
+<script>
+(function() {
+    var topicStats = {{ topic_stats_json|safe }};
+    if (!topicStats || topicStats.length === 0) return;
+
+    var ctxVertical = document.getElementById('dashboardChartVertical');
+    if (!ctxVertical) return;
+
+    var navColors = {
+        light: { primary: '#417690', primaryHover: '#205067', muted: '#666', grid: 'rgba(0,0,0,0.08)' },
+        dark:  { primary: '#39d0b0', primaryHover: '#56e0c4', muted: '#8b949e', grid: 'rgba(48, 54, 61, 0.5)' }
+    };
+
+    var chartInstance = null;
+
+    function renderChart() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        var theme = navColors[isDark ? 'dark' : 'light'];
+        var barColor = theme.primary;
+        var barHover = theme.primaryHover;
+        var textColor = theme.muted;
+        var gridColor = theme.grid;
+
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
+
+        var count = topicStats.length;
+        var maxLabelLength = 35;
+        var labels = topicStats.map(function(r) {
+            var name = r.name || '—';
+            return name.length > maxLabelLength ? name.slice(0, maxLabelLength) + '…' : name;
+        });
+
+        var tooltipOpts = {
+            callbacks: {
+                title: function(items) {
+                    var i = items[0] && items[0].dataIndex;
+                    return i != null && topicStats[i] ? topicStats[i].name : (items[0] && items[0].label);
+                }
+            },
+            backgroundColor: isDark ? '#21262d' : '#fff',
+            titleColor: isDark ? '#e6edf3' : '#333',
+            bodyColor: isDark ? '#8b949e' : '#666',
+            borderColor: isDark ? '#30363d' : '#ddd',
+            borderWidth: 1,
+        };
+
+        var xFontSize = count > 10 ? 9 : count > 5 ? 10 : 11;
+        chartInstance = new Chart(ctxVertical, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Attempts',
+                    data: topicStats.map(function(r) { return r.count; }),
+                    backgroundColor: barColor,
+                    borderColor: barColor,
+                    borderWidth: 1,
+                    hoverBackgroundColor: barHover,
+                    barThickness: count <= 8 ? 32 : count <= 15 ? 24 : 18,
+                    maxBarThickness: 40,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 8, bottom: 4 } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: tooltipOpts
+                },
+                scales: {
+                    x: {
+                        beginAtZero: false,
+                        ticks: {
+                            color: textColor,
+                            font: { size: xFontSize },
+                            maxRotation: count > 6 ? 45 : 0,
+                            minRotation: count > 6 ? 45 : 0,
+                            autoSkip: count > 12,
+                            maxTicksLimit: count > 12 ? 15 : undefined,
+                        },
+                        grid: { display: false }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: textColor, font: { size: 11 }, maxTicksLimit: 8 },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+    }
+
+    renderChart();
+    window.addEventListener('sip-theme-change', renderChart);
+})();
+</script>
+{% endblock %}

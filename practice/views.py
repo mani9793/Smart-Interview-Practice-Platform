@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Count, Avg
+from django.core.exceptions import FieldError
+import json
 
 from .models import QuestionSet, Question, PracticeSession, PracticeResponse
 from .forms import PracticeResponseForm, QuestionSetForm, QuestionForm
@@ -106,6 +109,57 @@ def history(request):
     """List previous practice attempts/sessions for the logged-in user."""
     sessions = PracticeSession.objects.filter(user=request.user).select_related('question_set').order_by('-started_at')
     return render(request, 'practice/history.html', {'sessions': sessions})
+
+
+@login_required
+def dashboard(request):
+    """Progress dashboard: attempts by topic (question set), average self-rating, recent sessions."""
+    base_responses = PracticeResponse.objects.filter(session__user=request.user)
+    has_rating = False
+    try:
+        topic_stats = (
+            base_responses.values('question__question_set__name')
+            .annotate(response_count=Count('id'), avg_rating=Avg('self_rating'))
+            .order_by('-response_count')
+        )
+        has_rating = True
+    except FieldError:
+        topic_stats = (
+            base_responses.values('question__question_set__name')
+            .annotate(response_count=Count('id'))
+            .order_by('-response_count')
+        )
+
+    recent_sessions = (
+        PracticeSession.objects.filter(user=request.user)
+        .select_related('question_set')
+        .order_by('-started_at')[:10]
+    )
+    total_sessions = PracticeSession.objects.filter(user=request.user).count()
+    total_responses = base_responses.count()
+
+    topic_stats_list = list(topic_stats)
+    topic_stats_json = json.dumps([
+        {
+            'name': r.get('question__question_set__name') or '—',
+            'count': r['response_count'],
+            'avg': float(r['avg_rating']) if r.get('avg_rating') is not None else None,
+        }
+        for r in topic_stats_list
+    ])
+
+    return render(
+        request,
+        'practice/dashboard.html',
+        {
+            'topic_stats': topic_stats_list,
+            'topic_stats_json': topic_stats_json,
+            'recent_sessions': recent_sessions,
+            'total_sessions': total_sessions,
+            'total_responses': total_responses,
+            'has_rating': has_rating,
+        },
+    )
 
 
 # ---- Question sets CRUD ----

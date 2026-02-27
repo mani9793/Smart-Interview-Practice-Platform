@@ -30,4 +30,12 @@ class PracticeSessionAdmin(admin.ModelAdmin):
 
 @admin.register(PracticeResponse)
 class PracticeResponseAdmin(admin.ModelAdmin):
-    list_display = ['session', 'question', 'saved_at']
+    list_display = ['session', 'question', 'response_short', 'saved_at']
+    list_filter = ['session']
+    search_fields = ['response_text']
+
+    def response_short(self, obj):
+        if not obj.response_text:
+            return '(no answer)'
+        return obj.response_text
+    response_short.short_description = 'Answer'

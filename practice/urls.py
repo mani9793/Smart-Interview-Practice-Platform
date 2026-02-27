@@ -9,6 +9,7 @@ urlpatterns = [
     path('practice/start/<int:set_id>/', views.practice_start, name='practice_start'),
     path('practice/<int:session_id>/', views.practice_session, name='practice_session'),
     path('history/', views.history, name='history'),
+    path('dashboard/', views.dashboard, name='dashboard'),
     # Question sets CRUD
     path('sets/', views.question_set_list, name='question_set_list'),
     path('sets/create/', views.question_set_create, name='question_set_create'),

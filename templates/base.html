@@ -158,6 +158,56 @@
         [data-theme="dark"] .alert { border: 1px solid var(--sip-border); }
         [data-theme="dark"] main a:not(.nav-link):not(.btn) { color: var(--sip-primary); }
         [data-theme="dark"] main a:not(.nav-link):not(.btn):hover { color: var(--sip-primary-hover); }
+        /* Dark theme: remove any white backgrounds in main */
+        [data-theme="dark"] main .card {
+            background-color: var(--sip-card) !important;
+            border-color: var(--sip-border);
+            color: var(--sip-text);
+        }
+        [data-theme="dark"] main .alert {
+            background-color: var(--sip-card);
+            color: var(--sip-text);
+            border-color: var(--sip-border);
+        }
+        [data-theme="dark"] main .alert .btn-close {
+            filter: invert(1) grayscale(100%);
+            opacity: 0.8;
+        }
+        [data-theme="dark"] main .table-responsive {
+            background-color: transparent !important;
+        }
+        [data-theme="dark"] main .table {
+            --bs-table-bg: var(--sip-card);
+            --bs-table-color: var(--sip-text);
+            --bs-table-border-color: var(--sip-border);
+        }
+        [data-theme="dark"] main .table th,
+        [data-theme="dark"] main .table td {
+            background-color: var(--sip-card) !important;
+            color: var(--sip-text);
+            border-color: var(--sip-border);
+        }
+        /* Dashboard & tables – theme-aware */
+        .border-sip { border-color: var(--sip-border) !important; }
+        .table-sip,
+        .table-sip th,
+        .table-sip td {
+            background-color: var(--sip-card) !important;
+            color: var(--sip-text);
+            border-color: var(--sip-border);
+        }
+        .table-sip thead th { color: var(--sip-muted); border-bottom-color: var(--sip-border); }
+        .table-sip tbody tr { border-bottom: 1px solid var(--sip-border); }
+        .badge-dashboard-score {
+            background-color: var(--sip-subtle);
+            color: var(--sip-text);
+            border: 1px solid var(--sip-border);
+        }
+        [data-theme="dark"] .badge-dashboard-score {
+            background-color: var(--sip-border);
+            color: var(--sip-text);
+            border-color: var(--sip-muted);
+        }
         main { padding: 2rem 0 3rem; }
         .auth-form-page {
             min-height: min(70vh, calc(100vh - 120px));
@@ -187,6 +237,9 @@
                     {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'practice:practice_index' %}"><i class="bi bi-play-circle me-1"></i>Practice</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'practice:dashboard' %}"><i class="bi bi-graph-up me-1"></i>Dashboard</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'practice:question_set_list' %}"><i class="bi bi-collection me-1"></i>Question Sets</a>
@@ -254,6 +307,7 @@
                 var next = current === 'dark' ? 'light' : 'dark';
                 applyTheme(next);
                 setStored(next);
+                try { window.dispatchEvent(new CustomEvent('sip-theme-change', { detail: { theme: next } })); } catch (e) {}
             }
             var stored = getStored();
             var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;

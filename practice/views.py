@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Avg
 from django.core.exceptions import FieldError
+from django.utils import timezone
 import json
 
 from .models import QuestionSet, Question, PracticeSession, PracticeResponse
@@ -29,14 +30,36 @@ def _unique_question_sets_by_name(queryset):
 
 @login_required
 def practice_start(request, set_id):
-    """Start a new practice session for the given set and redirect to first question."""
+    """Start a new practice session for the given set and redirect to first question.
+    GET param timer=0 to start without timer; timer=1 or omit for timer enabled."""
     qs = get_object_or_404(QuestionSet, pk=set_id)
     questions = list(qs.questions.all())
     if not questions:
         messages.warning(request, 'This set has no questions yet.')
         return redirect('practice:practice_index')
-    session = PracticeSession.objects.create(user=request.user, question_set=qs)
+    timer_enabled = request.GET.get('timer', '1') != '0'
+    session = PracticeSession.objects.create(
+        user=request.user,
+        question_set=qs,
+        timer_enabled=timer_enabled,
+    )
     return redirect('practice:practice_session', session_id=session.pk)
+
+
+def _build_responses_display(session):
+    """Build list of {question, answer_text, self_rating} in question order."""
+    responses_by_question = {
+        pr.question_id: {'answer_text': pr.response_text or '', 'self_rating': pr.self_rating}
+        for pr in session.responses.all()
+    }
+    return [
+        {
+            'question': q,
+            'answer_text': responses_by_question.get(q.pk, {}).get('answer_text', ''),
+            'self_rating': responses_by_question.get(q.pk, {}).get('self_rating'),
+        }
+        for q in session.questions_in_order()
+    ]
 
 
 @login_required
@@ -46,42 +69,50 @@ def practice_session(request, session_id):
     questions = list(session.questions_in_order())
     next_idx = session.next_question_index()
 
+    # Timer controls: pause, resume, end (when timer enabled, not in review, session in progress)
+    if not request.GET.get('review') and not session.ended_at and session.timer_enabled:
+        action = request.GET.get('action')
+        now = timezone.now()
+        if action == 'pause':
+            session.paused_at = now
+            session.save(update_fields=['paused_at'])
+            return redirect('practice:practice_session', session_id=session_id)
+        if action == 'resume' and session.paused_at:
+            session.total_paused_seconds += int((now - session.paused_at).total_seconds())
+            session.paused_at = None
+            session.save(update_fields=['total_paused_seconds', 'paused_at'])
+            return redirect('practice:practice_session', session_id=session_id)
+        if action == 'end_timer':
+            session.ended_at = now
+            session.save(update_fields=['ended_at'])
+            return redirect('practice:practice_session', session_id=session_id)
+
     # Review mode (from History): show read-only summary only, no Save & Next
     if request.GET.get('review'):
-        responses_by_question = {
-            pr.question_id: {'answer_text': pr.response_text or '', 'self_rating': pr.self_rating}
-            for pr in session.responses.all()
-        }
-        responses_display = []
-        for question in session.questions_in_order():
-            data = responses_by_question.get(question.pk, {'answer_text': '', 'self_rating': None})
-            responses_display.append({
-                'question': question,
-                'answer_text': data['answer_text'],
-                'self_rating': data['self_rating'],
-            })
         return render(request, 'practice/practice_complete.html', {
             'session': session,
-            'responses': responses_display,
+            'responses': _build_responses_display(session),
         })
 
-    if next_idx is None:
-        # Build (question, answer_text, self_rating) list in question order; load all responses in one query
-        responses_by_question = {
-            pr.question_id: {'answer_text': pr.response_text or '', 'self_rating': pr.self_rating}
-            for pr in session.responses.all()
-        }
-        responses_display = []
-        for question in session.questions_in_order():
-            data = responses_by_question.get(question.pk, {'answer_text': '', 'self_rating': None})
-            responses_display.append({
-                'question': question,
-                'answer_text': data['answer_text'],
-                'self_rating': data['self_rating'],
-            })
+    # Timed mode: if time is up (and not paused), mark session ended and show complete
+    if session.time_limit_minutes and not session.ended_at and not session.paused_at:
+        end_time = session.end_time()
+        if end_time and timezone.now() >= end_time:
+            session.ended_at = end_time
+            session.save(update_fields=['ended_at'])
+            return redirect('practice:practice_session', session_id=session_id)
+
+    # Session already ended (e.g. time ran out) or all questions answered: show complete
+    if session.ended_at or next_idx is None:
+        # Time ran out if we have a time limit, ended_at is set, and not all questions were answered
+        time_ran_out = (
+            bool(session.time_limit_minutes and session.ended_at) and
+            session.next_question_index() is not None
+        )
         return render(request, 'practice/practice_complete.html', {
             'session': session,
-            'responses': responses_display,
+            'responses': _build_responses_display(session),
+            'time_ran_out': time_ran_out,
         })
 
     question = questions[next_idx]
@@ -102,17 +133,32 @@ def practice_session(request, session_id):
             question=question,
             defaults=defaults,
         )
+        # If that was the last question, mark session ended for duration
+        session.refresh_from_db()
+        if session.next_question_index() is None and not session.ended_at:
+            session.ended_at = timezone.now()
+            session.save(update_fields=['ended_at'])
         return redirect('practice:practice_session', session_id=session_id)
     else:
         form = PracticeResponseForm(initial={'response_text': ''})
 
-    return render(request, 'practice/practice_question.html', {
+    # Elapsed timer data only when timer is enabled for this session
+    timer_enabled = session.timer_enabled
+    ctx = {
         'session': session,
         'question': question,
         'form': form,
         'question_number': next_idx + 1,
         'total_questions': len(questions),
-    })
+        'session_id': session_id,
+        'timer_enabled': timer_enabled,
+    }
+    if timer_enabled:
+        ctx['session_start_timestamp_ms'] = int(session.started_at.timestamp() * 1000)
+        ctx['timer_paused'] = bool(session.paused_at)
+        ctx['paused_at_timestamp_ms'] = int(session.paused_at.timestamp() * 1000) if session.paused_at else None
+        ctx['total_paused_seconds'] = session.total_paused_seconds or 0
+    return render(request, 'practice/practice_question.html', ctx)
 
 
 @login_required

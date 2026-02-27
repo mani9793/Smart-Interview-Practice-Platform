@@ -2,9 +2,20 @@
 {% block title %}Question {{ question_number }} – Practice{% endblock %}
 {% block content %}
 <div class="card card-sip shadow-sm p-4">
-    <p class="text-muted-sip small mb-3">
-        Question {{ question_number }} of {{ total_questions }} · <span class="badge {% if question.difficulty == 'easy' %}badge-easy{% elif question.difficulty == 'hard' %}badge-hard{% else %}badge-medium{% endif %} rounded-pill">{{ question.get_difficulty_display }}</span> · {{ session.question_set.name }}
-    </p>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <p class="text-muted-sip small mb-0">
+            Question {{ question_number }} of {{ total_questions }} · <span class="badge {% if question.difficulty == 'easy' %}badge-easy{% elif question.difficulty == 'hard' %}badge-hard{% else %}badge-medium{% endif %} rounded-pill">{{ question.get_difficulty_display }}</span> · {{ session.question_set.name }}
+        </p>
+        {% if timer_enabled %}
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="d-inline-flex align-items-center gap-1">
+                <i class="bi bi-stopwatch text-primary" style="font-size: 1.25rem;" aria-hidden="true"></i>
+                <span class="badge bg-secondary rounded-pill" id="session-timer-display">0:00</span>
+            </span>
+            <a href="{% url 'practice:practice_session' session_id %}?action=end_timer" class="btn btn-outline-danger btn-sm" onclick="return confirm('End session now? You can review your answers on the next page.');">End session</a>
+        </div>
+        {% endif %}
+    </div>
     <h2 class="h5 fw-semibold mb-3">Question</h2>
     <div class="bg-sip-subtle rounded p-3 mb-4 text-break">{{ question.text|linebreaksbr }}</div>
     {% if question.tags %}<p class="text-muted-sip small mb-3">Tags: {{ question.tags }}</p>{% endif %}
@@ -85,5 +96,34 @@
     setRating();
 })();
 </script>
+{% if timer_enabled %}
+<script>
+(function() {
+    var el = document.getElementById('session-timer-display');
+    if (!el) return;
+    var startMs = {{ session_start_timestamp_ms }};
+    var totalPausedSec = {{ total_paused_seconds }};
+    var pausedAtMs = {% if paused_at_timestamp_ms %}{{ paused_at_timestamp_ms }}{% else %}null{% endif %};
+    var isPaused = {{ timer_paused|yesno:"true,false" }};
+    function pad(n) { return n < 10 ? '0' + n : n; }
+    function formatElapsed(secs) {
+        var m = Math.floor(secs / 60);
+        var s = secs % 60;
+        return m + ':' + pad(s);
+    }
+    function getElapsedSeconds() {
+        if (isPaused && pausedAtMs !== null) {
+            return Math.max(0, Math.floor((pausedAtMs - startMs) / 1000) - totalPausedSec);
+        }
+        return Math.max(0, Math.floor((Date.now() - startMs) / 1000) - totalPausedSec);
+    }
+    function tick() {
+        el.textContent = formatElapsed(getElapsedSeconds());
+        setTimeout(tick, 1000);
+    }
+    tick();
+})();
+</script>
+{% endif %}
 {% endblock %}
 {% endblock %}
